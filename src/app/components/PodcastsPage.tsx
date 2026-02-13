@@ -10,6 +10,40 @@ interface PodcastsPageProps {
 export function PodcastsPage({ onBack }: PodcastsPageProps) {
   const [podcasts, setPodcasts] = useState<Podcast[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentAudio, setCurrentAudio] = useState<HTMLAudioElement | null>(null);
+  const [playingId, setPlayingId] = useState<number | null>(null);
+
+  const handlePlayPodcast = (podcast: any) => {
+    // Stop current audio if playing
+    if (currentAudio) {
+      currentAudio.pause();
+      currentAudio.currentTime = 0;
+    }
+
+    // If clicking the same podcast, just stop
+    if (playingId === podcast.id) {
+      setPlayingId(null);
+      setCurrentAudio(null);
+      return;
+    }
+
+    // Check if podcast has audio file
+    if (!podcast.audio_file) {
+      alert('Audio file not available for this podcast.');
+      return;
+    }
+
+    // Create and play new audio
+    const audio = new Audio(podcast.audio_file);
+    audio.play();
+    audio.onended = () => {
+      setPlayingId(null);
+      setCurrentAudio(null);
+    };
+    
+    setCurrentAudio(audio);
+    setPlayingId(podcast.id);
+  };
 
   useEffect(() => {
     const fetchPodcasts = async () => {
@@ -149,8 +183,24 @@ export function PodcastsPage({ onBack }: PodcastsPageProps) {
                       </div>
                     )}
                     <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button className="bg-white rounded-full p-4 hover:scale-110 transition-transform">
-                        <Play className="size-6 text-[#B8336A] fill-current" />
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handlePlayPodcast(podcast);
+                        }}
+                        className="bg-white rounded-full p-4 hover:scale-110 transition-transform"
+                      >
+                        {playingId === podcast.id ? (
+                          <div className="size-6 text-[#B8336A] flex items-center justify-center">
+                            <div className="flex gap-1">
+                              <div className="w-1 h-4 bg-[#B8336A] animate-pulse"></div>
+                              <div className="w-1 h-4 bg-[#B8336A] animate-pulse" style={{animationDelay: '0.2s'}}></div>
+                              <div className="w-1 h-4 bg-[#B8336A] animate-pulse" style={{animationDelay: '0.4s'}}></div>
+                            </div>
+                          </div>
+                        ) : (
+                          <Play className="size-6 text-[#B8336A] fill-current" />
+                        )}
                       </button>
                     </div>
                   </div>

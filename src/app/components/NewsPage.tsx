@@ -1,7 +1,9 @@
 import { ArrowLeft } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { getArticles, type Article } from '../../api/articles';
+import { Badge } from './ui/badge';
 import { Card } from './ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 
 interface NewsPageProps {
   onBack: () => void;
@@ -10,6 +12,13 @@ interface NewsPageProps {
 export function NewsPage({ onBack }: NewsPageProps) {
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+
+  const handleArticleClick = (article: Article) => {
+    setSelectedArticle(article);
+    setIsPreviewOpen(true);
+  };
 
   useEffect(() => {
     const fetchArticles = async () => {
@@ -67,7 +76,11 @@ export function NewsPage({ onBack }: NewsPageProps) {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {articles.map((article) => (
-              <Card key={article.id} className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer">
+              <Card 
+                key={article.id} 
+                onClick={() => handleArticleClick(article)}
+                className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+              >
                 {article.hero_image && (
                   <div className="aspect-[16/9] overflow-hidden">
                     <img 
@@ -103,6 +116,64 @@ export function NewsPage({ onBack }: NewsPageProps) {
           </div>
         )}
       </div>
+
+      {/* Article Preview Modal */}
+      <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
+        <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
+          {selectedArticle && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="text-2xl md:text-3xl mb-2" style={{ fontFamily: "'Lora', serif" }}>
+                  {selectedArticle.title}
+                </DialogTitle>
+                <div className="flex items-center gap-3 flex-wrap">
+                  <Badge variant="default">{selectedArticle.status}</Badge>
+                  <span className="text-sm text-muted-foreground">{selectedArticle.category.name}</span>
+                  <span className="text-sm text-muted-foreground">
+                    {new Date(selectedArticle.created_at).toLocaleDateString()}
+                  </span>
+                  {selectedArticle.is_editor_pick && (
+                    <Badge variant="outline" className="bg-[#B8336A] text-white">Editor's Pick</Badge>
+                  )}
+                </div>
+              </DialogHeader>
+
+              <div className="space-y-6 mt-6">
+                {selectedArticle.hero_image && (
+                  <img 
+                    src={selectedArticle.hero_image} 
+                    alt={selectedArticle.title}
+                    className="w-full h-64 object-cover rounded-lg"
+                  />
+                )}
+
+                <div>
+                  <h3 className="text-sm font-semibold text-muted-foreground mb-2">SUMMARY</h3>
+                  <p className="text-base leading-relaxed">{selectedArticle.summary}</p>
+                </div>
+
+                {selectedArticle.body_content && (
+                  <div>
+                    <h3 className="text-sm font-semibold text-muted-foreground mb-2">FULL ARTICLE</h3>
+                    <div className="prose prose-lg max-w-none">
+                      <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                        {selectedArticle.body_content}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex flex-wrap gap-2 pt-4 border-t">
+                  <h3 className="text-sm font-semibold text-muted-foreground w-full mb-2">TAGS</h3>
+                  {selectedArticle.tags.map((tag) => (
+                    <Badge key={tag} variant="secondary">{tag}</Badge>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
