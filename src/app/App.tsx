@@ -10,6 +10,7 @@ import { ResearchStrip } from './components/ResearchStrip';
 import { StoryCollage } from './components/StoryCollage';
 import { VideoPage } from './components/VideoPage';
 import { YourQuestionsSection } from './components/YourQuestionsSection';
+import { AdminPortal } from './components/admin/AdminPortal';
 
 export default function App() {
   const [currentView, setCurrentView] = useState<'home' | 'article' | 'news' | 'podcasts' | 'video' | 'admin'>('home');
