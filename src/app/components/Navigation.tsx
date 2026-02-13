@@ -1,7 +1,7 @@
 import { Menu } from 'lucide-react';
 
 interface NavigationProps {
-  onNavigate: (view: 'home' | 'news' | 'video' | 'podcasts') => void;
+  onNavigate: (view: 'home' | 'news' | 'video' | 'podcasts' | 'admin') => void;
 }
 
 export function Navigation({ onNavigate }: NavigationProps) {
@@ -32,10 +32,18 @@ export function Navigation({ onNavigate }: NavigationProps) {
               </div>
             </div>
 
-            {/* Mobile menu button */}
-            <button className="md:hidden p-2">
-              <Menu className="size-5" />
-            </button>
+            {/* Admin & Mobile menu button */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => onNavigate('admin')}
+                className="hidden md:inline-flex items-center gap-2 px-4 py-2 bg-[#B8336A] text-white text-sm font-semibold rounded hover:bg-[#9a2a58] transition-colors"
+              >
+                Admin Portal
+              </button>
+              <button className="md:hidden p-2">
+                <Menu className="size-5" />
+              </button>
+            </div>
           </div>
         </div>
       </div>

@@ -12,7 +12,7 @@ import { VideoPage } from './components/VideoPage';
 import { YourQuestionsSection } from './components/YourQuestionsSection';
 
 export default function App() {
-  const [currentView, setCurrentView] = useState<'home' | 'article' | 'news' | 'podcasts' | 'video'>('home');
+  const [currentView, setCurrentView] = useState<'home' | 'article' | 'news' | 'podcasts' | 'video' | 'admin'>('home');
 
   // Mock data for homepage
   const heroData = {
@@ -98,6 +98,11 @@ export default function App() {
     heroImage: "https://images.unsplash.com/photo-1678059466227-d19beeff7557?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx6aW1iYWJ3ZSUyMGNvdXBsZSUyMHJlbGF0aW9uc2hpcHxlbnwxfHx8fDE3NzA5MjY4MjV8MA&ixlib=rb-4.1.0&q=80&w=1080",
     userNeed: "LEARN" as const
   };
+
+  // Show admin portal without navigation
+  if (currentView === 'admin') {
+    return <AdminPortal />;
+  }
 
   return (
     <div className="min-h-screen bg-white">
