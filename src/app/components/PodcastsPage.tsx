@@ -1,4 +1,6 @@
 import { ArrowLeft, Calendar, Clock, Play } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { getPodcasts, type Podcast } from '../../api/podcasts';
 import { Card } from './ui/card';
 
 interface PodcastsPageProps {
@@ -6,7 +8,25 @@ interface PodcastsPageProps {
 }
 
 export function PodcastsPage({ onBack }: PodcastsPageProps) {
-  const podcasts = [
+  const [podcasts, setPodcasts] = useState<Podcast[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchPodcasts = async () => {
+      try {
+        const response = await getPodcasts({ page_size: 20, ordering: '-created_at' });
+        setPodcasts(response.results);
+      } catch (error) {
+        console.error('Failed to fetch podcasts:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPodcasts();
+  }, []);
+
+  const mockPodcasts = [
     {
       id: 1,
       image: "https://images.unsplash.com/photo-1590602847861-f357a9332bbc?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=800",
@@ -75,6 +95,19 @@ export function PodcastsPage({ onBack }: PodcastsPageProps) {
     }
   ];
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#B8336A] mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading podcasts...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const displayPodcasts = podcasts.length > 0 ? podcasts : mockPodcasts;
+
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
@@ -99,16 +132,22 @@ export function PodcastsPage({ onBack }: PodcastsPageProps) {
       {/* Podcasts Grid */}
       <div className="max-w-[1280px] mx-auto px-4 lg:px-6 py-12">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {podcasts.map((podcast) => (
+          {displayPodcasts.map((podcast) => (
             <Card key={podcast.id} className="overflow-hidden hover:shadow-lg transition-shadow">
               <div className="flex flex-col md:flex-row gap-6 p-6">
                 <div className="md:w-48 md:flex-shrink-0">
                   <div className="aspect-square rounded-lg overflow-hidden relative group">
-                    <img 
-                      src={podcast.image} 
-                      alt={podcast.title}
-                      className="w-full h-full object-cover"
-                    />
+                    {(podcast as any).cover_image || (podcast as any).image ? (
+                      <img 
+                        src={(podcast as any).cover_image || (podcast as any).image} 
+                        alt={podcast.title}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-[#B8336A] to-[#8B5A8B] flex items-center justify-center">
+                        <Play className="size-12 text-white" />
+                      </div>
+                    )}
                     <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                       <button className="bg-white rounded-full p-4 hover:scale-110 transition-transform">
                         <Play className="size-6 text-[#B8336A] fill-current" />
@@ -120,29 +159,33 @@ export function PodcastsPage({ onBack }: PodcastsPageProps) {
                 <div className="flex-1">
                   <div className="mb-2">
                     <span className="text-xs font-semibold text-[#B8336A] uppercase tracking-wide">
-                      {podcast.category}
+                      {(podcast as any).tags?.[0] || (podcast as any).category || 'Podcast'}
                     </span>
                   </div>
                   <h3 className="text-xl font-bold mb-2">
                     {podcast.title}
                   </h3>
-                  <p className="text-sm text-muted-foreground mb-3">
-                    Hosted by {podcast.host}
-                  </p>
-                  <h4 className="text-md font-semibold mb-3">
-                    {podcast.episode}
-                  </h4>
+                  {(podcast as any).episode_number && (
+                    <h4 className="text-md font-semibold mb-3">
+                      Episode {(podcast as any).episode_number}
+                    </h4>
+                  )}
+                  {(podcast as any).episode && (
+                    <h4 className="text-md font-semibold mb-3">
+                      {(podcast as any).episode}
+                    </h4>
+                  )}
                   <p className="text-sm text-muted-foreground mb-4">
                     {podcast.description}
                   </p>
                   <div className="flex items-center gap-4 text-xs text-muted-foreground">
                     <div className="flex items-center gap-1">
                       <Clock className="size-3" />
-                      <span>{podcast.duration}</span>
+                      <span>{(podcast as any).duration_seconds ? Math.floor((podcast as any).duration_seconds / 60) + ' min' : (podcast as any).duration || 'N/A'}</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <Calendar className="size-3" />
-                      <span>{podcast.date}</span>
+                      <span>{(podcast as any).created_at ? new Date((podcast as any).created_at).toLocaleDateString() : (podcast as any).date || ''}</span>
                     </div>
                   </div>
                 </div>

@@ -1,9 +1,11 @@
-import { Clock, FileText, Mic, TrendingUp, Video } from 'lucide-react';
+import { Clock, Eye, FileText, Mic, TrendingUp, Video } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { getArticles } from '../../../api/articles';
+import { getArticles, type Article } from '../../../api/articles';
 import { getPodcasts } from '../../../api/podcasts';
 import { getVideos } from '../../../api/videos';
+import { Badge } from '../ui/badge';
 import { Card } from '../ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 
 interface DashboardStats {
   totalArticles: number;
@@ -24,6 +26,13 @@ export function AdminDashboard() {
     recentArticles: [],
   });
   const [loading, setLoading] = useState(true);
+  const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+
+  const handleArticleClick = (article: Article) => {
+    setSelectedArticle(article);
+    setIsPreviewOpen(true);
+  };
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -140,10 +149,11 @@ export function AdminDashboard() {
             stats.recentArticles.map((article) => (
               <div
                 key={article.id}
-                className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors"
+                onClick={() => handleArticleClick(article)}
+                className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer group"
               >
                 <div className="flex-1">
-                  <h3 className="font-semibold mb-1">{article.title}</h3>
+                  <h3 className="font-semibold mb-1 group-hover:text-[#B8336A] transition-colors">{article.title}</h3>
                   <div className="flex items-center gap-4 text-sm text-muted-foreground">
                     <span className="flex items-center gap-1">
                       <span className={`w-2 h-2 rounded-full ${
@@ -155,6 +165,7 @@ export function AdminDashboard() {
                     <span>{new Date(article.created_at).toLocaleDateString()}</span>
                   </div>
                 </div>
+                <Eye className="w-5 h-5 text-muted-foreground group-hover:text-[#B8336A] transition-colors" />
               </div>
             ))
           ) : (
@@ -162,6 +173,97 @@ export function AdminDashboard() {
           )}
         </div>
       </Card>
+
+      {/* Article Preview Modal */}
+      <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
+        <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
+          {selectedArticle && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="text-2xl md:text-3xl mb-2" style={{ fontFamily: "'Lora', serif" }}>
+                  {selectedArticle.title}
+                </DialogTitle>
+                <div className="flex items-center gap-3 flex-wrap">
+                  <Badge variant={selectedArticle.status === 'PUBLISHED' ? 'default' : 'secondary'}>
+                    {selectedArticle.status}
+                  </Badge>
+                  <span className="text-sm text-muted-foreground">{selectedArticle.category.name}</span>
+                  <span className="text-sm text-muted-foreground">
+                    {new Date(selectedArticle.created_at).toLocaleDateString()}
+                  </span>
+                  {selectedArticle.is_editor_pick && (
+                    <Badge variant="outline" className="bg-[#B8336A] text-white">Editor's Pick</Badge>
+                  )}
+                  {selectedArticle.is_paywalled && (
+                    <Badge variant="outline">Paywalled</Badge>
+                  )}
+                </div>
+              </DialogHeader>
+
+              <div className="space-y-6 mt-6">
+                {selectedArticle.hero_image && (
+                  <img 
+                    src={selectedArticle.hero_image} 
+                    alt={selectedArticle.title}
+                    className="w-full h-64 object-cover rounded-lg"
+                  />
+                )}
+
+                <div>
+                  <h3 className="text-sm font-semibold text-muted-foreground mb-2">SUMMARY</h3>
+                  <p className="text-base leading-relaxed">{selectedArticle.summary}</p>
+                </div>
+
+                {selectedArticle.body_content && (
+                  <div>
+                    <h3 className="text-sm font-semibold text-muted-foreground mb-2">CONTENT</h3>
+                    <div className="prose prose-lg max-w-none">
+                      <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                        {selectedArticle.body_content}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t">
+                  <div>
+                    <h3 className="text-sm font-semibold text-muted-foreground mb-2">METADATA</h3>
+                    <div className="space-y-2 text-sm">
+                      <p><span className="font-medium">Type:</span> {selectedArticle.content_type}</p>
+                      <p><span className="font-medium">Views:</span> {selectedArticle.view_count}</p>
+                      {selectedArticle.sources_count !== undefined && (
+                        <p><span className="font-medium">Sources:</span> {selectedArticle.sources_count}</p>
+                      )}
+                      {selectedArticle.confidence_rating && (
+                        <p><span className="font-medium">Confidence:</span> {selectedArticle.confidence_rating}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3 className="text-sm font-semibold text-muted-foreground mb-2">TAGS</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedArticle.tags.map((tag) => (
+                        <Badge key={tag} variant="secondary">{tag}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {selectedArticle.author && (
+                  <div className="pt-4 border-t">
+                    <h3 className="text-sm font-semibold text-muted-foreground mb-2">AUTHOR</h3>
+                    <p className="text-sm">
+                      {selectedArticle.author.first_name} {selectedArticle.author.last_name}
+                      <span className="text-muted-foreground"> ({selectedArticle.author.email})</span>
+                    </p>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

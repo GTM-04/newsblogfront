@@ -1,4 +1,6 @@
 import { ArrowLeft, Eye, Play } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { getVideos, type Video } from '../../api/videos';
 import { Card } from './ui/card';
 
 interface VideoPageProps {
@@ -6,7 +8,25 @@ interface VideoPageProps {
 }
 
 export function VideoPage({ onBack }: VideoPageProps) {
-  const videos = [
+  const [videos, setVideos] = useState<Video[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchVideos = async () => {
+      try {
+        const response = await getVideos({ page_size: 20, ordering: '-created_at' });
+        setVideos(response.results);
+      } catch (error) {
+        console.error('Failed to fetch videos:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchVideos();
+  }, []);
+
+  const mockVideos = [
     {
       id: 1,
       thumbnail: "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=800",
@@ -99,6 +119,19 @@ export function VideoPage({ onBack }: VideoPageProps) {
     }
   ];
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#B8336A] mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading videos...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const displayVideos = videos.length > 0 ? videos : mockVideos;
+
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
@@ -123,28 +156,34 @@ export function VideoPage({ onBack }: VideoPageProps) {
       {/* Videos Grid */}
       <div className="max-w-[1280px] mx-auto px-4 lg:px-6 py-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {videos.map((video) => (
-            <Card key={video.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+          {displayVideos.map((video) => (
+            <Card key={video.id} className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer">
               <div className="relative aspect-video overflow-hidden group">
-                <img 
-                  src={video.thumbnail} 
-                  alt={video.title}
-                  className="w-full h-full object-cover"
-                />
+                {(video as any).thumbnail ? (
+                  <img 
+                    src={(video as any).thumbnail} 
+                    alt={video.title}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-[#B8336A] to-[#8B5A8B] flex items-center justify-center">
+                    <Play className="size-16 text-white" />
+                  </div>
+                )}
                 <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                   <button className="bg-white rounded-full p-4 hover:scale-110 transition-transform">
                     <Play className="size-8 text-[#B8336A] fill-current ml-1" />
                   </button>
                 </div>
                 <div className="absolute bottom-2 right-2 bg-black/80 text-white text-xs px-2 py-1 rounded">
-                  {video.duration}
+                  {(video as any).duration_seconds ? `${Math.floor((video as any).duration_seconds / 60)}:${String((video as any).duration_seconds % 60).padStart(2, '0')}` : (video as any).duration || 'N/A'}
                 </div>
               </div>
               
               <div className="p-4">
                 <div className="mb-2">
                   <span className="text-xs font-semibold text-[#B8336A] uppercase tracking-wide">
-                    {video.category}
+                    {(video as any).tags?.[0] || (video as any).category || 'Video'}
                   </span>
                 </div>
                 <h3 className="text-lg font-bold mb-2 line-clamp-2">
@@ -156,10 +195,10 @@ export function VideoPage({ onBack }: VideoPageProps) {
                 <div className="flex items-center gap-4 text-xs text-muted-foreground">
                   <div className="flex items-center gap-1">
                     <Eye className="size-3" />
-                    <span>{video.views} views</span>
+                    <span>{(video as any).view_count !== undefined ? (video as any).view_count + ' views' : (video as any).views || '0 views'}</span>
                   </div>
                   <span>•</span>
-                  <span>{video.date}</span>
+                  <span>{(video as any).created_at ? new Date((video as any).created_at).toLocaleDateString() : (video as any).date || ''}</span>
                 </div>
               </div>
             </Card>

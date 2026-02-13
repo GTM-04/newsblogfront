@@ -1,4 +1,6 @@
 import { ArrowLeft } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { getArticles, type Article } from '../../api/articles';
 import { Card } from './ui/card';
 
 interface NewsPageProps {
@@ -6,80 +8,34 @@ interface NewsPageProps {
 }
 
 export function NewsPage({ onBack }: NewsPageProps) {
-  const newsArticles = [
-    {
-      id: 1,
-      image: "https://images.unsplash.com/photo-1523367395443-e52540b43884?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=800",
-      category: "Health & Wellness",
-      title: "New Sexual Health Clinic Opens in Harare's Avondale Suburb",
-      excerpt: "The state-of-the-art facility offers comprehensive reproductive health services, counseling, and free STI testing for young people across Zimbabwe.",
-      date: "February 10, 2026",
-      readTime: "5 min read"
-    },
-    {
-      id: 2,
-      image: "https://images.unsplash.com/photo-1596992803598-2bb4e73dabb1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=800",
-      category: "Education",
-      title: "Zimbabwe Ministry of Education Launches Comprehensive Sex Education Program",
-      excerpt: "A groundbreaking curriculum will be introduced in secondary schools nationwide, focusing on consent, healthy relationships, and reproductive rights.",
-      date: "February 8, 2026",
-      readTime: "7 min read"
-    },
-    {
-      id: 3,
-      image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=800",
-      category: "Research",
-      title: "University of Zimbabwe Study Reveals Communication Key to Relationship Success",
-      excerpt: "Research involving 1,500 couples across Harare, Bulawayo, and Mutare shows that weekly check-ins improve relationship satisfaction by 45%.",
-      date: "February 5, 2026",
-      readTime: "6 min read"
-    },
-    {
-      id: 4,
-      image: "https://images.unsplash.com/photo-1571844307991-2f06e3f0d548?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=800",
-      category: "Community",
-      title: "Bulawayo Youth Launch LGBTQ+ Support Network",
-      excerpt: "A new community-led initiative provides safe spaces, mental health support, and sexual health resources for LGBTQ+ youth in Zimbabwe.",
-      date: "February 3, 2026",
-      readTime: "4 min read"
-    },
-    {
-      id: 5,
-      image: "https://images.unsplash.com/photo-1532619675605-1ede6c2ed2b0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=800",
-      category: "Policy",
-      title: "Parliament Debates New Reproductive Health Rights Bill",
-      excerpt: "Lawmakers discuss comprehensive legislation aimed at improving access to contraception and family planning services across all provinces.",
-      date: "January 30, 2026",
-      readTime: "8 min read"
-    },
-    {
-      id: 6,
-      image: "https://images.unsplash.com/photo-1544027993-37dbfe43562a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=800",
-      category: "Mental Health",
-      title: "Breaking Taboos: Mental Health and Sexual Wellness in Zimbabwe",
-      excerpt: "Psychologists in Harare are pioneering new approaches to address the intersection of mental health and intimate relationships.",
-      date: "January 28, 2026",
-      readTime: "6 min read"
-    },
-    {
-      id: 7,
-      image: "https://images.unsplash.com/photo-1517841905240-472988babdf9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=800",
-      category: "Innovation",
-      title: "Zimbabwe Tech Startup Develops Anonymous Sexual Health Consultation App",
-      excerpt: "The app connects users with certified healthcare professionals for confidential advice on sexual and reproductive health matters.",
-      date: "January 25, 2026",
-      readTime: "5 min read"
-    },
-    {
-      id: 8,
-      image: "https://images.unsplash.com/photo-1524250502761-1ac6f2e30d43?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=800",
-      category: "Culture",
-      title: "Traditional Leaders Join Campaign for Healthy Relationship Practices",
-      excerpt: "Community chiefs across rural Zimbabwe partner with health organizations to promote consent and communication in relationships.",
-      date: "January 22, 2026",
-      readTime: "7 min read"
-    }
-  ];
+  const [articles, setArticles] = useState<Article[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchArticles = async () => {
+      try {
+        const response = await getArticles({ status: 'PUBLISHED', page_size: 20, ordering: '-created_at' });
+        setArticles(response.results);
+      } catch (error) {
+        console.error('Failed to fetch articles:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchArticles();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#B8336A] mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading articles...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white">
@@ -104,40 +60,48 @@ export function NewsPage({ onBack }: NewsPageProps) {
 
       {/* News Grid */}
       <div className="max-w-[1280px] mx-auto px-4 lg:px-6 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {newsArticles.map((article) => (
-            <Card key={article.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-              <div className="aspect-[16/9] overflow-hidden">
-                <img 
-                  src={article.image} 
-                  alt={article.title}
-                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                />
-              </div>
-              <div className="p-6">
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="text-xs font-semibold text-[#B8336A] uppercase tracking-wide">
-                    {article.category}
-                  </span>
-                  <span className="text-xs text-muted-foreground">•</span>
-                  <span className="text-xs text-muted-foreground">{article.readTime}</span>
+        {articles.length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">No articles published yet.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {articles.map((article) => (
+              <Card key={article.id} className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer">
+                {article.hero_image && (
+                  <div className="aspect-[16/9] overflow-hidden">
+                    <img 
+                      src={article.hero_image} 
+                      alt={article.title}
+                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                    />
+                  </div>
+                )}
+                <div className="p-6">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-xs font-semibold text-[#B8336A] uppercase tracking-wide">
+                      {article.category.name}
+                    </span>
+                    <span className="text-xs text-muted-foreground">•</span>
+                    <span className="text-xs text-muted-foreground">{new Date(article.created_at).toLocaleDateString()}</span>
+                  </div>
+                  <h3 className="text-xl font-bold mb-3 line-clamp-2">
+                    {article.title}
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
+                    {article.summary}
+                  </p>
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span>{article.view_count} views</span>
+                    <button className="text-[#B8336A] font-semibold hover:underline">
+                      Read More →
+                    </button>
+                  </div>
                 </div>
-                <h3 className="text-xl font-bold mb-3 line-clamp-2">
-                  {article.title}
-                </h3>
-                <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
-                  {article.excerpt}
-                </p>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">{article.date}</span>
-                  <button className="text-sm font-semibold text-[#B8336A] hover:underline">
-                    Read More
-                  </button>
-                </div>
-              </div>
-            </Card>
-          ))}
-        </div>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
