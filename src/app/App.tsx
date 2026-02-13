@@ -1,15 +1,18 @@
 import { useState } from 'react';
-import { Navigation } from './components/Navigation';
-import { HeroFeature } from './components/HeroFeature';
-import { StoryCollage } from './components/StoryCollage';
-import { ResearchStrip } from './components/ResearchStrip';
-import { ReflectionsSection } from './components/ReflectionsSection';
-import { YourQuestionsSection } from './components/YourQuestionsSection';
-import { Footer } from './components/Footer';
 import { ArticlePage } from './components/ArticlePage';
+import { Footer } from './components/Footer';
+import { HeroFeature } from './components/HeroFeature';
+import { Navigation } from './components/Navigation';
+import { NewsPage } from './components/NewsPage';
+import { PodcastsPage } from './components/PodcastsPage';
+import { ReflectionsSection } from './components/ReflectionsSection';
+import { ResearchStrip } from './components/ResearchStrip';
+import { StoryCollage } from './components/StoryCollage';
+import { VideoPage } from './components/VideoPage';
+import { YourQuestionsSection } from './components/YourQuestionsSection';
 
 export default function App() {
-  const [currentView, setCurrentView] = useState<'home' | 'article'>('home');
+  const [currentView, setCurrentView] = useState<'home' | 'article' | 'news' | 'podcasts' | 'video'>('home');
 
   // Mock data for homepage
   const heroData = {
@@ -98,9 +101,9 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-white">
-      <Navigation />
+      <Navigation onNavigate={setCurrentView} />
       
-      {currentView === 'home' ? (
+      {currentView === 'home' && (
         <>
           <main>
             <HeroFeature {...heroData} />
@@ -122,7 +125,9 @@ export default function App() {
           
           <Footer />
         </>
-      ) : (
+      )}
+
+      {currentView === 'article' && (
         <>
           <ArticlePage {...articleData} />
           
@@ -136,6 +141,27 @@ export default function App() {
             </button>
           </div>
           
+          <Footer />
+        </>
+      )}
+
+      {currentView === 'news' && (
+        <>
+          <NewsPage onBack={() => setCurrentView('home')} />
+          <Footer />
+        </>
+      )}
+
+      {currentView === 'podcasts' && (
+        <>
+          <PodcastsPage onBack={() => setCurrentView('home')} />
+          <Footer />
+        </>
+      )}
+
+      {currentView === 'video' && (
+        <>
+          <VideoPage onBack={() => setCurrentView('home')} />
           <Footer />
         </>
       )}
