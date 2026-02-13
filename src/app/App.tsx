@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { AdminPortal } from './components/admin/AdminPortal';
 import { ArticlePage } from './components/ArticlePage';
 import { Footer } from './components/Footer';
 import { HeroFeature } from './components/HeroFeature';
@@ -10,17 +11,17 @@ import { ResearchStrip } from './components/ResearchStrip';
 import { StoryCollage } from './components/StoryCollage';
 import { VideoPage } from './components/VideoPage';
 import { YourQuestionsSection } from './components/YourQuestionsSection';
-import { AdminPortal } from './components/admin/AdminPortal';
+import heroImage from './Picture1.png';
 
 export default function App() {
   const [currentView, setCurrentView] = useState<'home' | 'article' | 'news' | 'podcasts' | 'video' | 'admin'>('home');
 
   // Mock data for homepage
   const heroData = {
-    image: "https://images.unsplash.com/photo-1678059466227-d19beeff7557?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx6aW1iYWJ3ZSUyMGNvdXBsZSUyMHJlbGF0aW9uc2hpcHxlbnwxfHx8fDE3NzA5MjY4MjV8MA&ixlib=rb-4.1.0&q=80&w=1080",
-    category: "Science & Health",
-    headline: "How Open Communication Transforms Intimate Relationships: New Research from Zimbabwe",
-    summary: "A landmark study involving 3,200 couples across Sub-Saharan Africa reveals that structured conversation frameworks increase relationship satisfaction by 47% and reduce conflict by 38%.",
+    image: heroImage,
+    category: "Sexual Wellness",
+    headline: "Sexual Expectations and Enhancements in Intimate Relationships",
+    summary: "Pulse & Passion redefines sexual wellness by creating a safe, inclusive digital space. We bridge the gap between scientific insight and daily relationship dynamics, focusing on normalized dialogue, expectation management, and practical enhancements for long-term relational intimacy.",
     userNeed: "LEARN" as const
   };
 
