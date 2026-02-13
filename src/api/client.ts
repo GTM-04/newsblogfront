@@ -1,7 +1,7 @@
 import axios, { AxiosError } from 'axios';
 
 // Use environment variable or default to Railway backend
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://newsblogbackend.railway.internal';
+const API_BASE_URL = (import.meta as any).env?.VITE_API_BASE_URL || 'https://newsblogbackend.railway.internal';
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
