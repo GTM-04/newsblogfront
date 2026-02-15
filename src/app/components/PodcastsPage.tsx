@@ -13,7 +13,7 @@ export function PodcastsPage({ onBack }: PodcastsPageProps) {
   const [currentAudio, setCurrentAudio] = useState<HTMLAudioElement | null>(null);
   const [playingId, setPlayingId] = useState<number | null>(null);
 
-  const handlePlayPodcast = (podcast: any) => {
+  const handlePlayPodcast = async (podcast: any) => {
     // Stop current audio if playing
     if (currentAudio) {
       currentAudio.pause();
@@ -35,14 +35,20 @@ export function PodcastsPage({ onBack }: PodcastsPageProps) {
 
     // Create and play new audio
     const audio = new Audio(podcast.audio_file);
-    audio.play();
-    audio.onended = () => {
-      setPlayingId(null);
-      setCurrentAudio(null);
-    };
     
-    setCurrentAudio(audio);
-    setPlayingId(podcast.id);
+    try {
+      await audio.play();
+      audio.onended = () => {
+        setPlayingId(null);
+        setCurrentAudio(null);
+      };
+      
+      setCurrentAudio(audio);
+      setPlayingId(podcast.id);
+    } catch (error) {
+      console.error('Failed to play audio:', error);
+      alert('Unable to play audio. Please try again.');
+    }
   };
 
   useEffect(() => {
@@ -182,13 +188,20 @@ export function PodcastsPage({ onBack }: PodcastsPageProps) {
                         <Play className="size-12 text-white" />
                       </div>
                     )}
-                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    {/* Play button overlay - always visible on mobile, hover on desktop */}
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center md:opacity-0 md:group-hover:opacity-100 transition-opacity touch-none">
                       <button 
                         onClick={(e) => {
                           e.stopPropagation();
                           handlePlayPodcast(podcast);
                         }}
-                        className="bg-white rounded-full p-4 hover:scale-110 transition-transform"
+                        onTouchEnd={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handlePlayPodcast(podcast);
+                        }}
+                        className="bg-white rounded-full p-4 hover:scale-110 active:scale-95 transition-transform touch-manipulation"
+                        aria-label={playingId === podcast.id ? 'Pause podcast' : 'Play podcast'}
                       >
                         {playingId === podcast.id ? (
                           <div className="size-6 text-[#B8336A] flex items-center justify-center">
