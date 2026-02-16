@@ -97,3 +97,8 @@ export const updateArticle = async (slug: string, articleData: Partial<ArticleCr
 export const deleteArticle = async (slug: string): Promise<void> => {
   await apiClient.delete(`/api/articles/${slug}/`);
 };
+
+export const incrementArticleView = async (slug: string): Promise<Article> => {
+  const { data } = await apiClient.post<Article>(`/api/articles/${slug}/increment_view/`);
+  return data;
+};

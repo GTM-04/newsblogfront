@@ -1,6 +1,6 @@
 import { ArrowLeft } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { getArticles, type Article } from '../../api/articles';
+import { getArticles, incrementArticleView, type Article } from '../../api/articles';
 import { Badge } from './ui/badge';
 import { Card } from './ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
@@ -15,9 +15,22 @@ export function NewsPage({ onBack }: NewsPageProps) {
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
-  const handleArticleClick = (article: Article) => {
+  const handleArticleClick = async (article: Article) => {
     setSelectedArticle(article);
     setIsPreviewOpen(true);
+    
+    // Increment view count
+    try {
+      const updatedArticle = await incrementArticleView(article.slug);
+      // Update the article in the list with the new view count
+      setArticles(prevArticles => 
+        prevArticles.map(a => a.id === updatedArticle.id ? updatedArticle : a)
+      );
+      // Update selected article with new view count
+      setSelectedArticle(updatedArticle);
+    } catch (error) {
+      console.error('Failed to increment view count:', error);
+    }
   };
 
   useEffect(() => {
