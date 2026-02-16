@@ -1,3 +1,4 @@
+import { Analytics } from '@vercel/analytics/react';
 import { useState } from 'react';
 import { AdminPortal } from './components/admin/AdminPortal';
 import { ArticlePage } from './components/ArticlePage';
@@ -107,8 +108,10 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      <Navigation onNavigate={setCurrentView} />
+    <>
+      <Analytics />
+      <div className="min-h-screen bg-white">
+        <Navigation onNavigate={setCurrentView} />
       
       {currentView === 'home' && (
         <>
@@ -172,6 +175,7 @@ export default function App() {
           <Footer />
         </>
       )}
-    </div>
+      </div>
+    </>
   );
 }
