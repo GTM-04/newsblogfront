@@ -50,7 +50,7 @@ export function PodcastsPage({ onBack }: PodcastsPageProps) {
     }
 
     // Create and play new audio
-    const audio = new Audio(podcast.audio_file);
+    const audio = new Audio(ensureHttps(podcast.audio_file));
     
     try {
       await audio.play();

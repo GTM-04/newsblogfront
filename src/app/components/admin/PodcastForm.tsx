@@ -1,6 +1,6 @@
 import { AlertCircle, ArrowLeft, Check, Save } from 'lucide-react';
-import { useState } from 'react';
-import { createPodcast, type PodcastCreateData } from '../../../api/podcasts';
+import { useEffect, useState } from 'react';
+import { createPodcast, getPodcast, updatePodcast, type Podcast, type PodcastCreateData } from '../../../api/podcasts';
 import { Alert, AlertDescription } from '../ui/alert';
 import { Button } from '../ui/button';
 import { Card } from '../ui/card';
@@ -8,11 +8,12 @@ import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
 
 interface PodcastFormProps {
+  podcastSlug?: string;
   onBack: () => void;
   onSuccess: () => void;
 }
 
-export function PodcastForm({ onBack, onSuccess }: PodcastFormProps) {
+export function PodcastForm({ podcastSlug, onBack, onSuccess }: PodcastFormProps) {
   const [formData, setFormData] = useState<Partial<PodcastCreateData>>({
     title: '',
     description: '',
@@ -26,8 +27,35 @@ export function PodcastForm({ onBack, onSuccess }: PodcastFormProps) {
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
+  const [loadingPodcast, setLoadingPodcast] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
+
+  // Load podcast data if editing
+  useEffect(() => {
+    if (podcastSlug) {
+      setLoadingPodcast(true);
+      getPodcast(podcastSlug)
+        .then((podcast: Podcast) => {
+          setFormData({
+            title: podcast.title,
+            description: podcast.description,
+            episode_number: podcast.episode_number,
+            duration_seconds: podcast.duration_seconds,
+            transcript: podcast.transcript,
+            tags: podcast.tags,
+            is_featured: podcast.is_featured,
+          });
+        })
+        .catch((err) => {
+          setError('Failed to load podcast data');
+          console.error(err);
+        })
+        .finally(() => {
+          setLoadingPodcast(false);
+        });
+    }
+  }, [podcastSlug]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,19 +64,32 @@ export function PodcastForm({ onBack, onSuccess }: PodcastFormProps) {
     setSuccess(false);
 
     try {
-      const submitData: PodcastCreateData = {
-        ...formData as PodcastCreateData,
-        audio_file: audioFile || undefined,
-        thumbnail: thumbnailFile || undefined,
-      };
-
-      await createPodcast(submitData);
+      if (podcastSlug) {
+        // Update existing podcast
+        const updateData: any = { ...formData };
+        if (audioFile) {
+          updateData.audio_file = audioFile;
+        }
+        if (thumbnailFile) {
+          updateData.thumbnail = thumbnailFile;
+        }
+        await updatePodcast(podcastSlug, updateData);
+      } else {
+        // Create new podcast
+        const submitData: PodcastCreateData = {
+          ...formData as PodcastCreateData,
+          audio_file: audioFile || undefined,
+          thumbnail: thumbnailFile || undefined,
+        };
+        await createPodcast(submitData);
+      }
+      
       setSuccess(true);
       setTimeout(() => {
         onSuccess();
       }, 1500);
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Failed to create podcast. Please try again.');
+      setError(err.response?.data?.detail || `Failed to ${podcastSlug ? 'update' : 'create'} podcast. Please try again.`);
     } finally {
       setLoading(false);
     }
@@ -88,19 +129,27 @@ export function PodcastForm({ onBack, onSuccess }: PodcastFormProps) {
         Back to Dashboard
       </button>
 
-      <Card className="p-8">
-        <h1 className="text-3xl font-bold mb-6" style={{ fontFamily: "'IBM Plex Sans', sans-serif" }}>
-          Create New Podcast
-        </h1>
+      {loadingPodcast ? (
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#B8336A] mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading podcast...</p>
+          </div>
+        </div>
+      ) : (
+        <Card className="p-8">
+          <h1 className="text-3xl font-bold mb-6" style={{ fontFamily: "'IBM Plex Sans', sans-serif" }}>
+            {podcastSlug ? 'Edit Podcast' : 'Create New Podcast'}
+          </h1>
 
-        {success && (
-          <Alert className="mb-6 border-green-500 bg-green-50">
-            <Check className="h-4 w-4 text-green-600" />
-            <AlertDescription className="text-green-600">
-              Podcast created successfully! Redirecting...
-            </AlertDescription>
-          </Alert>
-        )}
+          {success && (
+            <Alert className="mb-6 border-green-500 bg-green-50">
+              <Check className="h-4 w-4 text-green-600" />
+              <AlertDescription className="text-green-600">
+                Podcast {podcastSlug ? 'updated' : 'created'} successfully! Redirecting...
+              </AlertDescription>
+            </Alert>
+          )}
 
         {error && (
           <Alert variant="destructive" className="mb-6">
@@ -265,14 +314,15 @@ export function PodcastForm({ onBack, onSuccess }: PodcastFormProps) {
               disabled={loading}
             >
               <Save className="w-4 h-4 mr-2" />
-              {loading ? 'Creating...' : 'Create Podcast'}
+              {loading ? (podcastSlug ? 'Updating...' : 'Creating...') : (podcastSlug ? 'Update Podcast' : 'Create Podcast')}
             </Button>
             <Button type="button" variant="outline" onClick={onBack} disabled={loading}>
               Cancel
             </Button>
           </div>
         </form>
-      </Card>
+        </Card>
+      )}
     </div>
   );
 }

@@ -5,7 +5,7 @@ import { formatDateWithFallback } from '../../utils/dateUtils';
 import { ensureHttps } from '../../utils/imageUtils';
 import { Badge } from './ui/badge';
 import { Card } from './ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog';
 
 interface NewsPageProps {
   onBack: () => void;
@@ -166,6 +166,9 @@ export function NewsPage({ onBack }: NewsPageProps) {
                 <DialogTitle className="text-2xl md:text-3xl mb-2" style={{ fontFamily: "'Lora', serif" }}>
                   {selectedArticle.title}
                 </DialogTitle>
+                <DialogDescription className="sr-only">
+                  Full article content
+                </DialogDescription>
                 <div className="flex items-center gap-3 flex-wrap">
                   <Badge variant="default">{selectedArticle.status}</Badge>
                   <span className="text-sm text-muted-foreground">{selectedArticle.category?.name || 'Uncategorized'}</span>

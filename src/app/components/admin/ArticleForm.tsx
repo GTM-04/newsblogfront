@@ -1,6 +1,6 @@
 import { AlertCircle, ArrowLeft, Check, Save } from 'lucide-react';
-import { useState } from 'react';
-import { createArticle, type ArticleCreateData } from '../../../api/articles';
+import { useEffect, useState } from 'react';
+import { createArticle, getArticle, updateArticle, type Article, type ArticleCreateData } from '../../../api/articles';
 import { Alert, AlertDescription } from '../ui/alert';
 import { Button } from '../ui/button';
 import { Card } from '../ui/card';
@@ -9,11 +9,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Textarea } from '../ui/textarea';
 
 interface ArticleFormProps {
+  articleSlug?: string;
   onBack: () => void;
   onSuccess: () => void;
 }
 
-export function ArticleForm({ onBack, onSuccess }: ArticleFormProps) {
+export function ArticleForm({ articleSlug, onBack, onSuccess }: ArticleFormProps) {
   const [formData, setFormData] = useState<Partial<ArticleCreateData>>({
     title: '',
     summary: '',
@@ -30,8 +31,41 @@ export function ArticleForm({ onBack, onSuccess }: ArticleFormProps) {
   const [tagInput, setTagInput] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
+  const [loadingArticle, setLoadingArticle] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
+
+  // Load article data if editing
+  useEffect(() => {
+    if (articleSlug) {
+      setLoadingArticle(true);
+      getArticle(articleSlug)
+        .then((article: Article) => {
+          setFormData({
+            title: article.title,
+            subtitle: article.subtitle,
+            summary: article.summary,
+            body: article.body_content || '',
+            category: article.category.id,
+            tags: article.tags,
+            content_type: article.content_type,
+            status: article.status,
+            is_editor_pick: article.is_editor_pick,
+            is_paywalled: article.is_paywalled,
+            sources_count: article.sources_count,
+            experts_interviewed: article.experts_interviewed,
+            confidence_rating: article.confidence_rating,
+          });
+        })
+        .catch((err) => {
+          setError('Failed to load article data');
+          console.error(err);
+        })
+        .finally(() => {
+          setLoadingArticle(false);
+        });
+    }
+  }, [articleSlug]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,18 +74,28 @@ export function ArticleForm({ onBack, onSuccess }: ArticleFormProps) {
     setSuccess(false);
 
     try {
-      const submitData: ArticleCreateData = {
-        ...formData as ArticleCreateData,
-        hero_image: imageFile || undefined,
-      };
-
-      await createArticle(submitData);
+      if (articleSlug) {
+        // Update existing article
+        const updateData: any = { ...formData };
+        if (imageFile) {
+          updateData.hero_image = imageFile;
+        }
+        await updateArticle(articleSlug, updateData);
+      } else {
+        // Create new article
+        const submitData: ArticleCreateData = {
+          ...formData as ArticleCreateData,
+          hero_image: imageFile || undefined,
+        };
+        await createArticle(submitData);
+      }
+      
       setSuccess(true);
       setTimeout(() => {
         onSuccess();
       }, 1500);
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Failed to create article. Please try again.');
+      setError(err.response?.data?.detail || `Failed to ${articleSlug ? 'update' : 'create'} article. Please try again.`);
     } finally {
       setLoading(false);
     }
@@ -84,19 +128,27 @@ export function ArticleForm({ onBack, onSuccess }: ArticleFormProps) {
         Back to Dashboard
       </button>
 
-      <Card className="p-8">
-        <h1 className="text-3xl font-bold mb-6" style={{ fontFamily: "'IBM Plex Sans', sans-serif" }}>
-          Create New Article
-        </h1>
+      {loadingArticle ? (
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#B8336A] mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading article...</p>
+          </div>
+        </div>
+      ) : (
+        <Card className="p-8">
+          <h1 className="text-3xl font-bold mb-6" style={{ fontFamily: "'IBM Plex Sans', sans-serif" }}>
+            {articleSlug ? 'Edit Article' : 'Create New Article'}
+          </h1>
 
-        {success && (
-          <Alert className="mb-6 border-green-500 bg-green-50">
-            <Check className="h-4 w-4 text-green-600" />
-            <AlertDescription className="text-green-600">
-              Article created successfully! Redirecting...
-            </AlertDescription>
-          </Alert>
-        )}
+          {success && (
+            <Alert className="mb-6 border-green-500 bg-green-50">
+              <Check className="h-4 w-4 text-green-600" />
+              <AlertDescription className="text-green-600">
+                Article {articleSlug ? 'updated' : 'created'} successfully! Redirecting...
+              </AlertDescription>
+            </Alert>
+          )}
 
         {error && (
           <Alert variant="destructive" className="mb-6">
@@ -299,14 +351,15 @@ export function ArticleForm({ onBack, onSuccess }: ArticleFormProps) {
               disabled={loading}
             >
               <Save className="w-4 h-4 mr-2" />
-              {loading ? 'Creating...' : 'Create Article'}
+              {loading ? (articleSlug ? 'Updating...' : 'Creating...') : (articleSlug ? 'Update Article' : 'Create Article')}
             </Button>
             <Button type="button" variant="outline" onClick={onBack} disabled={loading}>
               Cancel
             </Button>
           </div>
         </form>
-      </Card>
+        </Card>
+      )}
     </div>
   );
 }

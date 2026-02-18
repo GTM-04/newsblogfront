@@ -5,8 +5,8 @@ import { Button } from '../ui/button';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
-  currentView: 'dashboard' | 'create-article' | 'create-podcast' | 'create-video';
-  onNavigate: (view: 'dashboard' | 'create-article' | 'create-podcast' | 'create-video') => void;
+  currentView: 'dashboard' | 'create-article' | 'create-podcast' | 'create-video' | 'edit-article' | 'edit-podcast';
+  onNavigate: (view: 'dashboard' | 'create-article' | 'create-podcast' | 'create-video' | 'edit-article' | 'edit-podcast') => void;
 }
 
 export function AdminLayout({ children, currentView, onNavigate }: AdminLayoutProps) {

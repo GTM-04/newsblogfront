@@ -1,11 +1,11 @@
-import { Clock, Eye, FileText, Mic, TrendingUp, Video } from 'lucide-react';
+import { Clock, Edit, Eye, FileText, Mic, TrendingUp, Video } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { getArticles, type Article } from '../../../api/articles';
 import { getPodcasts, type Podcast } from '../../../api/podcasts';
 import { getVideos } from '../../../api/videos';
 import { Badge } from '../ui/badge';
 import { Card } from '../ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../ui/dialog';
 
 interface DashboardStats {
   totalArticles: number;
@@ -17,7 +17,12 @@ interface DashboardStats {
   recentPodcasts: any[];
 }
 
-export function AdminDashboard() {
+interface AdminDashboardProps {
+  onEditArticle: (slug: string) => void;
+  onEditPodcast: (slug: string) => void;
+}
+
+export function AdminDashboard({ onEditArticle, onEditPodcast }: AdminDashboardProps) {
   const [stats, setStats] = useState<DashboardStats>({
     totalArticles: 0,
     publishedArticles: 0,
@@ -160,10 +165,12 @@ export function AdminDashboard() {
             stats.recentArticles.map((article) => (
               <div
                 key={article.id}
-                onClick={() => handleArticleClick(article)}
-                className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer group"
+                className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors group"
               >
-                <div className="flex-1">
+                <div 
+                  className="flex-1 cursor-pointer"
+                  onClick={() => handleArticleClick(article)}
+                >
                   <h3 className="font-semibold mb-1 group-hover:text-[#B8336A] transition-colors">{article.title}</h3>
                   <div className="flex items-center gap-4 text-sm text-muted-foreground">
                     <span className="flex items-center gap-1">
@@ -176,7 +183,28 @@ export function AdminDashboard() {
                     <span>{new Date(article.created_at).toLocaleDateString()}</span>
                   </div>
                 </div>
-                <Eye className="w-5 h-5 text-muted-foreground group-hover:text-[#B8336A] transition-colors" />
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onEditArticle(article.slug);
+                    }}
+                    className="p-2 hover:bg-[#B8336A]/10 rounded-lg transition-colors"
+                    title="Edit article"
+                  >
+                    <Edit className="w-5 h-5 text-[#B8336A]" />
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleArticleClick(article);
+                    }}
+                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                    title="Preview article"
+                  >
+                    <Eye className="w-5 h-5 text-muted-foreground" />
+                  </button>
+                </div>
               </div>
             ))
           ) : (
@@ -193,10 +221,12 @@ export function AdminDashboard() {
             stats.recentPodcasts.map((podcast) => (
               <div
                 key={podcast.id}
-                onClick={() => handlePodcastClick(podcast)}
-                className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer group"
+                className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors group"
               >
-                <div className="flex-1">
+                <div 
+                  className="flex-1 cursor-pointer"
+                  onClick={() => handlePodcastClick(podcast)}
+                >
                   <h3 className="font-semibold mb-1 group-hover:text-[#B8336A] transition-colors">{podcast.title}</h3>
                   <div className="flex items-center gap-4 text-sm text-muted-foreground">
                     <span>Episode {podcast.episode_number}</span>
@@ -207,7 +237,28 @@ export function AdminDashboard() {
                     )}
                   </div>
                 </div>
-                <Eye className="w-5 h-5 text-muted-foreground group-hover:text-[#B8336A] transition-colors" />
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onEditPodcast(podcast.slug);
+                    }}
+                    className="p-2 hover:bg-[#B8336A]/10 rounded-lg transition-colors"
+                    title="Edit podcast"
+                  >
+                    <Edit className="w-5 h-5 text-[#B8336A]" />
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handlePodcastClick(podcast);
+                    }}
+                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                    title="Preview podcast"
+                  >
+                    <Eye className="w-5 h-5 text-muted-foreground" />
+                  </button>
+                </div>
               </div>
             ))
           ) : (
@@ -225,6 +276,9 @@ export function AdminDashboard() {
                 <DialogTitle className="text-2xl md:text-3xl mb-2" style={{ fontFamily: "'Lora', serif" }}>
                   {selectedArticle.title}
                 </DialogTitle>
+                <DialogDescription className="sr-only">
+                  Article preview
+                </DialogDescription>
                 <div className="flex items-center gap-3 flex-wrap">
                   <Badge variant={selectedArticle.status === 'PUBLISHED' ? 'default' : 'secondary'}>
                     {selectedArticle.status}
@@ -316,6 +370,9 @@ export function AdminDashboard() {
                 <DialogTitle className="text-2xl md:text-3xl mb-2" style={{ fontFamily: "'Lora', serif" }}>
                   {selectedPodcast.title}
                 </DialogTitle>
+                <DialogDescription className="sr-only">
+                  Podcast preview
+                </DialogDescription>
                 <div className="flex items-center gap-3 flex-wrap">
                   <Badge variant="default">Episode {selectedPodcast.episode_number}</Badge>
                   <span className="text-sm text-muted-foreground">
