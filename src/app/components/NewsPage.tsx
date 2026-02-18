@@ -119,9 +119,9 @@ export function NewsPage({ onBack }: NewsPageProps) {
                   </p>
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
                     <span>{article.view_count} views</span>
-                    <button className="text-[#B8336A] font-semibold hover:underline">
+                    <span className="text-[#B8336A] font-semibold hover:underline">
                       Read More →
-                    </button>
+                    </span>
                   </div>
                 </div>
               </Card>
