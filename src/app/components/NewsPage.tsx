@@ -176,12 +176,14 @@ export function NewsPage({ onBack }: NewsPageProps) {
                   </div>
                 )}
 
-                <div className="flex flex-wrap gap-2 pt-4 border-t">
-                  <h3 className="text-sm font-semibold text-muted-foreground w-full mb-2">TAGS</h3>
-                  {selectedArticle.tags.map((tag) => (
-                    <Badge key={tag} variant="secondary">{tag}</Badge>
-                  ))}
-                </div>
+                {selectedArticle.tags && selectedArticle.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-2 pt-4 border-t">
+                    <h3 className="text-sm font-semibold text-muted-foreground w-full mb-2">TAGS</h3>
+                    {selectedArticle.tags.map((tag) => (
+                      <Badge key={tag} variant="secondary">{tag}</Badge>
+                    ))}
+                  </div>
+                )}
               </div>
             </>
           )}
