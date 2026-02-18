@@ -1,7 +1,7 @@
 import { Clock, Eye, FileText, Mic, TrendingUp, Video } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { getArticles, type Article } from '../../../api/articles';
-import { getPodcasts } from '../../../api/podcasts';
+import { getPodcasts, type Podcast } from '../../../api/podcasts';
 import { getVideos } from '../../../api/videos';
 import { Badge } from '../ui/badge';
 import { Card } from '../ui/card';
@@ -14,6 +14,7 @@ interface DashboardStats {
   totalPodcasts: number;
   totalVideos: number;
   recentArticles: any[];
+  recentPodcasts: any[];
 }
 
 export function AdminDashboard() {
@@ -24,14 +25,22 @@ export function AdminDashboard() {
     totalPodcasts: 0,
     totalVideos: 0,
     recentArticles: [],
+    recentPodcasts: [],
   });
   const [loading, setLoading] = useState(true);
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
+  const [selectedPodcast, setSelectedPodcast] = useState<Podcast | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [isPodcastPreviewOpen, setIsPodcastPreviewOpen] = useState(false);
 
   const handleArticleClick = (article: Article) => {
     setSelectedArticle(article);
     setIsPreviewOpen(true);
+  };
+
+  const handlePodcastClick = (podcast: Podcast) => {
+    setSelectedPodcast(podcast);
+    setIsPodcastPreviewOpen(true);
   };
 
   useEffect(() => {
@@ -46,6 +55,7 @@ export function AdminDashboard() {
         ]);
 
         const recent = await getArticles({ page_size: 5, ordering: '-created_at' });
+        const recentPodcasts = await getPodcasts({ page_size: 5, ordering: '-created_at' });
 
         setStats({
           totalArticles: allArticles.count,
@@ -54,6 +64,7 @@ export function AdminDashboard() {
           totalPodcasts: podcasts.count,
           totalVideos: videos.count,
           recentArticles: recent.results,
+          recentPodcasts: recentPodcasts.results,
         });
       } catch (error) {
         console.error('Failed to fetch stats:', error);
@@ -174,6 +185,37 @@ export function AdminDashboard() {
         </div>
       </Card>
 
+      {/* Recent Podcasts */}
+      <Card className="p-6">
+        <h2 className="text-xl font-bold mb-4">Recent Podcasts</h2>
+        <div className="space-y-4">
+          {stats.recentPodcasts.length > 0 ? (
+            stats.recentPodcasts.map((podcast) => (
+              <div
+                key={podcast.id}
+                onClick={() => handlePodcastClick(podcast)}
+                className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer group"
+              >
+                <div className="flex-1">
+                  <h3 className="font-semibold mb-1 group-hover:text-[#B8336A] transition-colors">{podcast.title}</h3>
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <span>Episode {podcast.episode_number}</span>
+                    <span>{Math.floor(podcast.duration_seconds / 60)} min</span>
+                    <span>{new Date(podcast.created_at).toLocaleDateString()}</span>
+                    {podcast.view_count !== undefined && (
+                      <span>{podcast.view_count} plays</span>
+                    )}
+                  </div>
+                </div>
+                <Eye className="w-5 h-5 text-muted-foreground group-hover:text-[#B8336A] transition-colors" />
+              </div>
+            ))
+          ) : (
+            <p className="text-center text-muted-foreground py-8">No podcasts yet</p>
+          )}
+        </div>
+      </Card>
+
       {/* Article Preview Modal */}
       <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
         <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
@@ -256,6 +298,98 @@ export function AdminDashboard() {
                     <p className="text-sm">
                       {selectedArticle.author.first_name} {selectedArticle.author.last_name}
                       <span className="text-muted-foreground"> ({selectedArticle.author.email})</span>
+                    </p>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Podcast Preview Modal */}
+      <Dialog open={isPodcastPreviewOpen} onOpenChange={setIsPodcastPreviewOpen}>
+        <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
+          {selectedPodcast && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="text-2xl md:text-3xl mb-2" style={{ fontFamily: "'Lora', serif" }}>
+                  {selectedPodcast.title}
+                </DialogTitle>
+                <div className="flex items-center gap-3 flex-wrap">
+                  <Badge variant="default">Episode {selectedPodcast.episode_number}</Badge>
+                  <span className="text-sm text-muted-foreground">
+                    {Math.floor(selectedPodcast.duration_seconds / 60)} minutes
+                  </span>
+                  <span className="text-sm text-muted-foreground">
+                    {new Date(selectedPodcast.created_at).toLocaleDateString()}
+                  </span>
+                  {selectedPodcast.is_featured && (
+                    <Badge variant="outline" className="bg-[#B8336A] text-white">Featured</Badge>
+                  )}
+                </div>
+              </DialogHeader>
+
+              <div className="space-y-6 mt-6">
+                {selectedPodcast.thumbnail && (
+                  <img 
+                    src={selectedPodcast.thumbnail} 
+                    alt={selectedPodcast.title}
+                    className="w-full h-64 object-cover rounded-lg"
+                  />
+                )}
+
+                <div>
+                  <h3 className="text-sm font-semibold text-muted-foreground mb-2">DESCRIPTION</h3>
+                  <p className="text-base leading-relaxed">{selectedPodcast.description}</p>
+                </div>
+
+                {selectedPodcast.transcript && (
+                  <div>
+                    <h3 className="text-sm font-semibold text-muted-foreground mb-2">TRANSCRIPT</h3>
+                    <div className="prose prose-lg max-w-none">
+                      <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                        {selectedPodcast.transcript}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {selectedPodcast.audio_file && (
+                  <div>
+                    <h3 className="text-sm font-semibold text-muted-foreground mb-2">AUDIO</h3>
+                    <audio controls className="w-full">
+                      <source src={selectedPodcast.audio_file} type="audio/mpeg" />
+                      Your browser does not support the audio element.
+                    </audio>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t">
+                  <div>
+                    <h3 className="text-sm font-semibold text-muted-foreground mb-2">METADATA</h3>
+                    <div className="space-y-2 text-sm">
+                      <p><span className="font-medium">Plays:</span> {selectedPodcast.view_count}</p>
+                      <p><span className="font-medium">Duration:</span> {Math.floor(selectedPodcast.duration_seconds / 60)} min</p>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3 className="text-sm font-semibold text-muted-foreground mb-2">TAGS</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedPodcast.tags.map((tag) => (
+                        <Badge key={tag} variant="secondary">{tag}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {selectedPodcast.author && (
+                  <div className="pt-4 border-t">
+                    <h3 className="text-sm font-semibold text-muted-foreground mb-2">AUTHOR</h3>
+                    <p className="text-sm">
+                      {selectedPodcast.author.first_name} {selectedPodcast.author.last_name}
+                      <span className="text-muted-foreground"> ({selectedPodcast.author.email})</span>
                     </p>
                   </div>
                 )}

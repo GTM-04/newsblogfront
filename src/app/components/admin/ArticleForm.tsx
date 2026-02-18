@@ -165,7 +165,7 @@ export function ArticleForm({ onBack, onSuccess }: ArticleFormProps) {
                 <SelectContent>
                   <SelectItem value="NEWS">News</SelectItem>
                   <SelectItem value="RESEARCH">Research</SelectItem>
-                  <SelectItem value="ESSAY">Essay</SelectItem>
+                  <SelectItem value="ESSAY">Article/Opinion piece</SelectItem>
                 </SelectContent>
               </Select>
             </div>

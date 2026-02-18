@@ -1,6 +1,7 @@
 import { ArrowLeft, Eye, Play } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { getVideos, type Video } from '../../api/videos';
+import { ensureHttps } from '../../utils/imageUtils';
 import { Card } from './ui/card';
 
 interface VideoPageProps {
@@ -161,7 +162,7 @@ export function VideoPage({ onBack }: VideoPageProps) {
               <div className="relative aspect-video overflow-hidden group">
                 {(video as any).thumbnail ? (
                   <img 
-                    src={(video as any).thumbnail} 
+                    src={ensureHttps((video as any).thumbnail)} 
                     alt={video.title}
                     className="w-full h-full object-cover"
                   />

@@ -1,7 +1,9 @@
 import { ArrowLeft, Calendar, Clock, Play } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { getPodcasts, type Podcast } from '../../api/podcasts';
+import { getPodcasts, incrementPodcastView, type Podcast } from '../../api/podcasts';
+import { ensureHttps } from '../../utils/imageUtils';
 import { Card } from './ui/card';
+
 
 interface PodcastsPageProps {
   onBack: () => void;
@@ -31,6 +33,20 @@ export function PodcastsPage({ onBack }: PodcastsPageProps) {
     if (!podcast.audio_file) {
       alert('Audio file not available for this podcast.');
       return;
+    }
+
+    // Increment view count when starting to play
+    try {
+      if (podcast.slug) {
+        const updatedPodcast = await incrementPodcastView(podcast.slug);
+        // Update the podcast in the list with the new view count
+        setPodcasts(prevPodcasts => 
+          prevPodcasts.map(p => p.id === updatedPodcast.id ? updatedPodcast : p)
+        );
+      }
+    } catch (error) {
+      console.error('Failed to increment view count:', error);
+      // Continue playing even if view increment fails
     }
 
     // Create and play new audio
@@ -179,7 +195,7 @@ export function PodcastsPage({ onBack }: PodcastsPageProps) {
                   <div className="aspect-square rounded-lg overflow-hidden relative group">
                     {(podcast as any).cover_image || (podcast as any).image ? (
                       <img 
-                        src={(podcast as any).cover_image || (podcast as any).image} 
+                        src={ensureHttps((podcast as any).cover_image || (podcast as any).image)} 
                         alt={podcast.title}
                         className="w-full h-full object-cover"
                       />
@@ -250,6 +266,9 @@ export function PodcastsPage({ onBack }: PodcastsPageProps) {
                       <Calendar className="size-3" />
                       <span>{(podcast as any).created_at ? new Date((podcast as any).created_at).toLocaleDateString() : (podcast as any).date || ''}</span>
                     </div>
+                    {(podcast as any).view_count !== undefined && (
+                      <span>{(podcast as any).view_count} plays</span>
+                    )}
                   </div>
                 </div>
               </div>

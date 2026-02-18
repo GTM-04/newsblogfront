@@ -1,6 +1,8 @@
 import { ArrowLeft } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { getArticles, incrementArticleView, type Article } from '../../api/articles';
+import { formatDateWithFallback } from '../../utils/dateUtils';
+import { ensureHttps } from '../../utils/imageUtils';
 import { Badge } from './ui/badge';
 import { Card } from './ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
@@ -97,7 +99,7 @@ export function NewsPage({ onBack }: NewsPageProps) {
                 {article.hero_image && (
                   <div className="aspect-[16/9] overflow-hidden">
                     <img 
-                      src={article.hero_image} 
+                      src={ensureHttps(article.hero_image)} 
                       alt={article.title}
                       className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                     />
@@ -109,7 +111,9 @@ export function NewsPage({ onBack }: NewsPageProps) {
                       {article.category?.name || 'Uncategorized'}
                     </span>
                     <span className="text-xs text-muted-foreground">•</span>
-                    <span className="text-xs text-muted-foreground">{new Date(article.created_at).toLocaleDateString()}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {formatDateWithFallback(article.published_at, article.created_at)}
+                    </span>
                   </div>
                   <h3 className="text-xl font-bold mb-3 line-clamp-2">
                     {article.title}
@@ -143,7 +147,7 @@ export function NewsPage({ onBack }: NewsPageProps) {
                   <Badge variant="default">{selectedArticle.status}</Badge>
                   <span className="text-sm text-muted-foreground">{selectedArticle.category?.name || 'Uncategorized'}</span>
                   <span className="text-sm text-muted-foreground">
-                    {new Date(selectedArticle.created_at).toLocaleDateString()}
+                    {formatDateWithFallback(selectedArticle.published_at, selectedArticle.created_at)}
                   </span>
                   {selectedArticle.is_editor_pick && (
                     <Badge variant="outline" className="bg-[#B8336A] text-white">Editor's Pick</Badge>
@@ -154,7 +158,7 @@ export function NewsPage({ onBack }: NewsPageProps) {
               <div className="space-y-6 mt-6">
                 {selectedArticle.hero_image && (
                   <img 
-                    src={selectedArticle.hero_image} 
+                    src={ensureHttps(selectedArticle.hero_image)} 
                     alt={selectedArticle.title}
                     className="w-full h-64 object-cover rounded-lg"
                   />

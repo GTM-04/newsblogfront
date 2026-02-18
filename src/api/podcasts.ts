@@ -20,6 +20,7 @@ export interface Podcast {
     last_name: string;
   };
   is_featured: boolean;
+  view_count: number;
   published_at?: string;
   created_at: string;
   updated_at: string;
@@ -79,4 +80,9 @@ export const updatePodcast = async (slug: string, podcastData: Partial<PodcastCr
 
 export const deletePodcast = async (slug: string): Promise<void> => {
   await apiClient.delete(`/api/podcasts/${slug}/`);
+};
+
+export const incrementPodcastView = async (slug: string): Promise<Podcast> => {
+  const { data } = await apiClient.post<Podcast>(`/api/podcasts/${slug}/increment_view/`);
+  return data;
 };
