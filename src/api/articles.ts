@@ -74,7 +74,7 @@ export const createArticle = async (articleData: ArticleCreateData): Promise<Art
   Object.entries(articleData).forEach(([key, value]) => {
     if (value !== undefined && value !== null) {
       if (key === 'tags') {
-        (value as string[]).forEach(tag => formData.append('tags', tag));
+        formData.append('tags', JSON.stringify(value));
       } else if (key === 'hero_image' && value instanceof File) {
         formData.append('hero_image', value);
       } else {
@@ -90,7 +90,23 @@ export const createArticle = async (articleData: ArticleCreateData): Promise<Art
 };
 
 export const updateArticle = async (slug: string, articleData: Partial<ArticleCreateData>): Promise<Article> => {
-  const { data } = await apiClient.patch<Article>(`/api/articles/${slug}/`, articleData);
+  const formData = new FormData();
+  
+  Object.entries(articleData).forEach(([key, value]) => {
+    if (value !== undefined && value !== null) {
+      if (key === 'tags') {
+        formData.append('tags', JSON.stringify(value));
+      } else if (key === 'hero_image' && value instanceof File) {
+        formData.append('hero_image', value);
+      } else if (!(value instanceof File)) {
+        formData.append(key, value.toString());
+      }
+    }
+  });
+
+  const { data } = await apiClient.patch<Article>(`/api/articles/${slug}/`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
   return data;
 };
 

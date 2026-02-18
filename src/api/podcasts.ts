@@ -56,9 +56,9 @@ export const createPodcast = async (podcastData: PodcastCreateData): Promise<Pod
   Object.entries(podcastData).forEach(([key, value]) => {
     if (value !== undefined && value !== null) {
       if (key === 'tags') {
-        (value as string[]).forEach(tag => formData.append('tags', tag));
+        formData.append('tags', JSON.stringify(value));
       } else if (key === 'related_articles') {
-        (value as number[]).forEach(id => formData.append('related_articles', id.toString()));
+        formData.append('related_articles', JSON.stringify(value));
       } else if ((key === 'audio_file' || key === 'thumbnail') && value instanceof File) {
         formData.append(key, value);
       } else {
@@ -74,7 +74,25 @@ export const createPodcast = async (podcastData: PodcastCreateData): Promise<Pod
 };
 
 export const updatePodcast = async (slug: string, podcastData: Partial<PodcastCreateData>): Promise<Podcast> => {
-  const { data } = await apiClient.patch<Podcast>(`/api/podcasts/${slug}/`, podcastData);
+  const formData = new FormData();
+  
+  Object.entries(podcastData).forEach(([key, value]) => {
+    if (value !== undefined && value !== null) {
+      if (key === 'tags') {
+        formData.append('tags', JSON.stringify(value));
+      } else if (key === 'related_articles') {
+        formData.append('related_articles', JSON.stringify(value));
+      } else if ((key === 'audio_file' || key === 'thumbnail') && value instanceof File) {
+        formData.append(key, value);
+      } else if (!(value instanceof File)) {
+        formData.append(key, value.toString());
+      }
+    }
+  });
+
+  const { data } = await apiClient.patch<Podcast>(`/api/podcasts/${slug}/`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
   return data;
 };
 
