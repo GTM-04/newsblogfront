@@ -1,6 +1,6 @@
 import { ArrowLeft } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { getArticles, incrementArticleView, type Article } from '../../api/articles';
+import { getArticle, getArticles, incrementArticleView, type Article } from '../../api/articles';
 import { formatDateWithFallback } from '../../utils/dateUtils';
 import { ensureHttps } from '../../utils/imageUtils';
 import { Badge } from './ui/badge';
@@ -16,26 +16,38 @@ export function NewsPage({ onBack }: NewsPageProps) {
   const [loading, setLoading] = useState(true);
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [loadingArticle, setLoadingArticle] = useState(false);
 
   const handleArticleClick = async (article: Article) => {
-    setSelectedArticle(article);
     setIsPreviewOpen(true);
+    setLoadingArticle(true);
     
-    // Increment view count in background
     try {
-      const updatedArticle = await incrementArticleView(article.slug);
-      // Merge the updated view count with the existing article data
-      const mergedArticle = { ...article, view_count: updatedArticle.view_count };
+      // Fetch the full article with body content
+      const fullArticle = await getArticle(article.slug);
+      setSelectedArticle(fullArticle);
       
-      // Update the article in the list with the new view count
-      setArticles(prevArticles => 
-        prevArticles.map(a => a.id === article.id ? mergedArticle : a)
-      );
-      // Update selected article with new view count
-      setSelectedArticle(mergedArticle);
+      // Increment view count in background
+      try {
+        const updatedArticle = await incrementArticleView(article.slug);
+        // Merge the updated view count
+        const mergedArticle = { ...fullArticle, view_count: updatedArticle.view_count };
+        
+        // Update the article in the list with the new view count
+        setArticles(prevArticles => 
+          prevArticles.map(a => a.id === article.id ? { ...a, view_count: updatedArticle.view_count } : a)
+        );
+        // Update selected article with new view count
+        setSelectedArticle(mergedArticle);
+      } catch (error) {
+        console.error('Failed to increment view count:', error);
+      }
     } catch (error) {
-      console.error('Failed to increment view count:', error);
-      // Keep the modal open with original data even if increment fails
+      console.error('Failed to fetch full article:', error);
+      // Fall back to the article from the list
+      setSelectedArticle(article);
+    } finally {
+      setLoadingArticle(false);
     }
   };
 
@@ -141,7 +153,14 @@ export function NewsPage({ onBack }: NewsPageProps) {
       {/* Article Preview Modal */}
       <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
         <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
-          {selectedArticle && (
+          {loadingArticle ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#B8336A] mx-auto mb-4"></div>
+                <p className="text-muted-foreground">Loading article...</p>
+              </div>
+            </div>
+          ) : selectedArticle && (
             <>
               <DialogHeader>
                 <DialogTitle className="text-2xl md:text-3xl mb-2" style={{ fontFamily: "'Lora', serif" }}>
