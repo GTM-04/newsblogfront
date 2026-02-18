@@ -21,17 +21,21 @@ export function NewsPage({ onBack }: NewsPageProps) {
     setSelectedArticle(article);
     setIsPreviewOpen(true);
     
-    // Increment view count
+    // Increment view count in background
     try {
       const updatedArticle = await incrementArticleView(article.slug);
+      // Merge the updated view count with the existing article data
+      const mergedArticle = { ...article, view_count: updatedArticle.view_count };
+      
       // Update the article in the list with the new view count
       setArticles(prevArticles => 
-        prevArticles.map(a => a.id === updatedArticle.id ? updatedArticle : a)
+        prevArticles.map(a => a.id === article.id ? mergedArticle : a)
       );
       // Update selected article with new view count
-      setSelectedArticle(updatedArticle);
+      setSelectedArticle(mergedArticle);
     } catch (error) {
       console.error('Failed to increment view count:', error);
+      // Keep the modal open with original data even if increment fails
     }
   };
 

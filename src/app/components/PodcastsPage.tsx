@@ -266,9 +266,7 @@ export function PodcastsPage({ onBack }: PodcastsPageProps) {
                       <Calendar className="size-3" />
                       <span>{(podcast as any).created_at ? new Date((podcast as any).created_at).toLocaleDateString() : (podcast as any).date || ''}</span>
                     </div>
-                    {(podcast as any).view_count !== undefined && (
-                      <span>{(podcast as any).view_count} plays</span>
-                    )}
+                    <span>{(podcast as any).view_count ?? 0} plays</span>
                   </div>
                 </div>
               </div>
