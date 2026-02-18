@@ -106,7 +106,7 @@ export function NewsPage({ onBack }: NewsPageProps) {
                 <div className="p-6">
                   <div className="flex items-center gap-2 mb-3">
                     <span className="text-xs font-semibold text-[#B8336A] uppercase tracking-wide">
-                      {article.category.name}
+                      {article.category?.name || 'Uncategorized'}
                     </span>
                     <span className="text-xs text-muted-foreground">•</span>
                     <span className="text-xs text-muted-foreground">{new Date(article.created_at).toLocaleDateString()}</span>
@@ -141,7 +141,7 @@ export function NewsPage({ onBack }: NewsPageProps) {
                 </DialogTitle>
                 <div className="flex items-center gap-3 flex-wrap">
                   <Badge variant="default">{selectedArticle.status}</Badge>
-                  <span className="text-sm text-muted-foreground">{selectedArticle.category.name}</span>
+                  <span className="text-sm text-muted-foreground">{selectedArticle.category?.name || 'Uncategorized'}</span>
                   <span className="text-sm text-muted-foreground">
                     {new Date(selectedArticle.created_at).toLocaleDateString()}
                   </span>
