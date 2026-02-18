@@ -168,19 +168,18 @@ export function NewsPage({ onBack }: NewsPageProps) {
                   />
                 )}
 
-                <div>
-                  <h3 className="text-sm font-semibold text-muted-foreground mb-2">SUMMARY</h3>
-                  <p className="text-base leading-relaxed">{selectedArticle.summary}</p>
-                </div>
-
-                {selectedArticle.body_content && (
+                {selectedArticle.body_content ? (
                   <div>
-                    <h3 className="text-sm font-semibold text-muted-foreground mb-2">FULL ARTICLE</h3>
                     <div className="prose prose-lg max-w-none">
                       <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">
                         {selectedArticle.body_content}
                       </p>
                     </div>
+                  </div>
+                ) : (
+                  <div>
+                    <h3 className="text-sm font-semibold text-muted-foreground mb-2">SUMMARY</h3>
+                    <p className="text-base leading-relaxed">{selectedArticle.summary}</p>
                   </div>
                 )}
 
