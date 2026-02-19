@@ -8,9 +8,26 @@ interface VideoPageProps {
   onBack: () => void;
 }
 
+// Type for mock video data
+interface MockVideo {
+  id: number;
+  thumbnail: string;
+  title: string;
+  description: string;
+  duration: string;
+  views: string;
+  date: string;
+  category: string;
+}
+
+// Union type for both API and mock videos
+type DisplayVideo = Video | MockVideo;
+
 export function VideoPage({ onBack }: VideoPageProps) {
   const [videos, setVideos] = useState<Video[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedVideo, setSelectedVideo] = useState<DisplayVideo | null>(null);
+  const [isPlayerOpen, setIsPlayerOpen] = useState(false);
 
   useEffect(() => {
     const fetchVideos = async () => {
@@ -26,6 +43,16 @@ export function VideoPage({ onBack }: VideoPageProps) {
 
     fetchVideos();
   }, []);
+
+  const handlePlayVideo = (video: DisplayVideo) => {
+    setSelectedVideo(video);
+    setIsPlayerOpen(true);
+  };
+
+  const handleClosePlayer = () => {
+    setIsPlayerOpen(false);
+    setSelectedVideo(null);
+  };
 
   const mockVideos = [
     {
@@ -159,7 +186,7 @@ export function VideoPage({ onBack }: VideoPageProps) {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {displayVideos.map((video) => (
             <Card key={video.id} className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer">
-              <div className="relative aspect-video overflow-hidden group">
+              <div className="relative aspect-video overflow-hidden group" onClick={() => handlePlayVideo(video)}>
                 {(video as any).thumbnail ? (
                   <img 
                     src={ensureHttps((video as any).thumbnail)} 
@@ -172,7 +199,13 @@ export function VideoPage({ onBack }: VideoPageProps) {
                   </div>
                 )}
                 <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button className="bg-white rounded-full p-4 hover:scale-110 transition-transform">
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handlePlayVideo(video);
+                    }}
+                    className="bg-white rounded-full p-4 hover:scale-110 transition-transform"
+                  >
                     <Play className="size-8 text-[#B8336A] fill-current ml-1" />
                   </button>
                 </div>
@@ -206,6 +239,85 @@ export function VideoPage({ onBack }: VideoPageProps) {
           ))}
         </div>
       </div>
+
+      {/* Video Player Modal */}
+      {isPlayerOpen && selectedVideo && (
+        <div 
+          className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4"
+          onClick={handleClosePlayer}
+        >
+          <div 
+            className="relative w-full max-w-5xl bg-black rounded-lg overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close button */}
+            <button 
+              onClick={handleClosePlayer}
+              className="absolute top-4 right-4 z-10 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
+            >
+              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+
+            {/* Video Player */}
+            <div className="aspect-video">
+              {(selectedVideo as any).external_url ? (
+                // Handle YouTube/external URLs
+                (selectedVideo as any).external_url.includes('youtube.com') || (selectedVideo as any).external_url.includes('youtu.be') ? (
+                  <iframe
+                    src={getYouTubeEmbedUrl((selectedVideo as any).external_url)}
+                    className="w-full h-full"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                ) : (
+                  <iframe
+                    src={(selectedVideo as any).external_url}
+                    className="w-full h-full"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                )
+              ) : (selectedVideo as any).video_file ? (
+                // Handle uploaded video files
+                <video
+                  controls
+                  autoPlay
+                  className="w-full h-full"
+                  src={ensureHttps((selectedVideo as any).video_file)}
+                >
+                  Your browser does not support the video tag.
+                </video>
+              ) : (
+                // Fallback
+                <div className="w-full h-full flex items-center justify-center text-white">
+                  <p>Video not available</p>
+                </div>
+              )}
+            </div>
+
+            {/* Video Info */}
+            <div className="p-6 bg-black text-white">
+              <h2 className="text-2xl font-bold mb-2">{selectedVideo.title}</h2>
+              <p className="text-gray-300 mb-4">{selectedVideo.description}</p>
+              <div className="flex items-center gap-4 text-sm text-gray-400">
+                <span>{(selectedVideo as any).view_count !== undefined ? (selectedVideo as any).view_count + ' views' : '0 views'}</span>
+                <span>•</span>
+                <span>{(selectedVideo as any).created_at ? new Date((selectedVideo as any).created_at).toLocaleDateString() : ''}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
+}
+
+// Helper function to convert YouTube URLs to embed format
+function getYouTubeEmbedUrl(url: string): string {
+  const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
+  const match = url.match(regExp);
+  const videoId = (match && match[7].length === 11) ? match[7] : null;
+  return videoId ? `https://www.youtube.com/embed/${videoId}?autoplay=1` : url;
 }
