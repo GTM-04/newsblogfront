@@ -1,6 +1,6 @@
 import { Analytics } from '@vercel/analytics/react';
 import { useEffect, useState } from 'react';
-import { FeedResponse, getHomepageFeed } from '../../api/feed';
+import { FeedResponse, getHomepageFeed } from '../api/feed';
 import { AdminPortal } from './components/admin/AdminPortal';
 import { ArticlePage } from './components/ArticlePage';
 import { Footer } from './components/Footer';
