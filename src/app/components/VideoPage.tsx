@@ -1,8 +1,38 @@
 import { ArrowLeft, Eye, Play } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { getVideos, type Video } from '../../api/videos';
 import { ensureHttps } from '../../utils/imageUtils';
 import { Card } from './ui/card';
+// Video player with play count increment logic
+function VideoPlayerWithPlayCount({ src, slug, playCounted, setPlayCounted }: { src: string, slug?: string, playCounted?: boolean, setPlayCounted: (fn: (prev: any) => any) => void }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  React.useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !slug) return;
+    let hasAlreadyCounted = false;
+    const onPlay = () => {
+      if (hasAlreadyCounted || playCounted) return;
+      hasAlreadyCounted = true;
+      fetch(`/api/videos/${slug}/increment_play/`, { method: 'POST' });
+      setPlayCounted((prev: any) => ({ ...prev, [slug]: true }));
+    };
+    video.addEventListener('play', onPlay, { once: true });
+    return () => {
+      video.removeEventListener('play', onPlay);
+    };
+  }, [slug, playCounted, setPlayCounted]);
+  return (
+    <video
+      ref={videoRef}
+      controls
+      autoPlay
+      className="w-full h-full"
+      src={src}
+    >
+      Your browser does not support the video tag.
+    </video>
+  );
+}
 
 interface VideoPageProps {
   onBack: () => void;
@@ -47,7 +77,13 @@ export function VideoPage({ onBack }: VideoPageProps) {
   const handlePlayVideo = (video: DisplayVideo) => {
     setSelectedVideo(video);
     setIsPlayerOpen(true);
+    // Reset play counted for new video
+    if ((video as any).slug) {
+      setPlayCounted(prev => ({ ...prev, [(video as any).slug]: false }));
+    }
   };
+  // Track play count increment per video
+  const [playCounted, setPlayCounted] = useState<{ [slug: string]: boolean }>({});
 
   const handleClosePlayer = () => {
     setIsPlayerOpen(false);

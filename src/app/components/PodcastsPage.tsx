@@ -1,6 +1,6 @@
 import { ArrowLeft, Calendar, Clock, Play } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { getPodcasts, incrementPodcastView, type Podcast } from '../../api/podcasts';
+import { getPodcasts, type Podcast } from '../../api/podcasts';
 import { ensureHttps } from '../../utils/imageUtils';
 import { Card } from './ui/card';
 
@@ -14,6 +14,8 @@ export function PodcastsPage({ onBack }: PodcastsPageProps) {
   const [loading, setLoading] = useState(true);
   const [currentAudio, setCurrentAudio] = useState<HTMLAudioElement | null>(null);
   const [playingId, setPlayingId] = useState<number | null>(null);
+  // Track play count increment per podcast
+  const [playCounted, setPlayCounted] = useState<{ [slug: string]: boolean }>({});
 
   const handlePlayPodcast = async (podcast: any) => {
     // Stop current audio if playing
@@ -35,22 +37,22 @@ export function PodcastsPage({ onBack }: PodcastsPageProps) {
       return;
     }
 
-    // Increment view count when starting to play
-    try {
-      if (podcast.slug) {
-        const updatedPodcast = await incrementPodcastView(podcast.slug);
-        // Update the podcast in the list with the new view count
-        setPodcasts(prevPodcasts => 
-          prevPodcasts.map(p => p.id === updatedPodcast.id ? updatedPodcast : p)
-        );
-      }
-    } catch (error) {
-      console.error('Failed to increment view count:', error);
-      // Continue playing even if view increment fails
+    // Increment play count one-time per play session
+    if (podcast.slug && !playCounted[podcast.slug]) {
+      fetch(`/api/podcasts/${podcast.slug}/increment_play/`, { method: 'POST' });
+      setPlayCounted(prev => ({ ...prev, [podcast.slug]: true }));
     }
 
     // Create and play new audio
     const audio = new Audio(ensureHttps(podcast.audio_file));
+    let hasAlreadyCounted = false;
+    audio.addEventListener('play', () => {
+      if (hasAlreadyCounted) return;
+      hasAlreadyCounted = true;
+      if (podcast.slug) {
+        fetch(`/api/podcasts/${podcast.slug}/increment_play/`, { method: 'POST' });
+      }
+    }, { once: true });
     
     try {
       await audio.play();
@@ -267,6 +269,10 @@ export function PodcastsPage({ onBack }: PodcastsPageProps) {
                       <span>{(podcast as any).created_at ? new Date((podcast as any).created_at).toLocaleDateString() : (podcast as any).date || ''}</span>
                     </div>
                     <span>{(podcast as any).view_count ?? 0} plays</span>
+                                      <span>{(podcast as any).view_count ?? 0} views</span>
+                                      {typeof (podcast as any).play_count === 'number' && (
+                                        <span>{(podcast as any).play_count} plays</span>
+                                      )}
                   </div>
                 </div>
               </div>

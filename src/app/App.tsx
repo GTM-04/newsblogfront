@@ -1,5 +1,6 @@
 import { Analytics } from '@vercel/analytics/react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { FeedResponse, getHomepageFeed } from './api/feed';
 import { AdminPortal } from './components/admin/AdminPortal';
 import { ArticlePage } from './components/ArticlePage';
 import { Footer } from './components/Footer';
@@ -17,38 +18,21 @@ import heroImage from './Picture1.png';
 export default function App() {
   const [currentView, setCurrentView] = useState<'home' | 'article' | 'news' | 'podcasts' | 'video' | 'admin'>('home');
 
-  // Mock data for homepage
-  const heroData = {
-    image: heroImage,
-    category: "Sexual Wellness",
-    headline: "Sexual Expectations and Enhancements in Intimate Relationships",
-    summary: "Pulse & Passion redefines sexual wellness by creating a safe, inclusive digital space. We bridge the gap between scientific insight and daily relationship dynamics, focusing on normalized dialogue, expectation management, and practical enhancements for long-term relational intimacy.",
-    userNeed: "LEARN" as const
-  };
 
-  const storyCollageData = [
-    {
-      image: "https://images.unsplash.com/photo-1646457411048-93db3b3abd14?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx6aW1iYWJ3ZSUyMHlvdW5nJTIwd29tYW4lMjBoZWFsdGh8ZW58MXx8fHwxNzcwOTI2ODI4fDA&ixlib=rb-4.1.0&q=80&w=1080",
-      category: "Mental Health",
-      headline: "Understanding the Mind-Body Connection in Sexual Wellness",
-      summary: "Mental health professionals explain why addressing emotional wellbeing is crucial for healthy intimacy.",
-      userNeed: "LEARN" as const
-    },
-    {
-      image: "https://images.unsplash.com/photo-1592598015799-35c84b09394c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxhZnJpY2FuJTIwd29tYW4lMjBjb25maWRlbnR8ZW58MXx8fHwxNzcwOTI2ODQxfDA&ixlib=rb-4.1.0&q=80&w=1080",
-      category: "Identity",
-      headline: "Breaking Silence: LGBTQ+ Sexual Health in Southern Africa",
-      summary: "New policy recommendations aim to make sexual health resources more inclusive and accessible to all communities.",
-      userNeed: "KNOW" as const
-    },
-    {
-      image: "https://images.unsplash.com/photo-1611620005823-85f11dc95a77?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxhZnJpY2FuJTIwY291cGxlJTIwaW50aW1hdGV8ZW58MXx8fHwxNzcwOTI2ODQzfDA&ixlib=rb-4.1.0&q=80&w=1080",
-      category: "Relationships",
-      headline: "The Art of Intimacy: Expert Tips for Long-Term Partners",
-      summary: "Relationship therapists share evidence-based strategies for maintaining connection over decades.",
-      userNeed: "ACT" as const
-    }
-  ];
+  // Homepage feed state
+  const [feed, setFeed] = useState<FeedResponse | null>(null);
+  const [feedLoading, setFeedLoading] = useState(true);
+  const [feedError, setFeedError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (currentView !== 'home') return;
+    setFeedLoading(true);
+    setFeedError(null);
+    getHomepageFeed(10)
+      .then(data => setFeed(data))
+      .catch(() => setFeedError('Failed to load homepage feed.'))
+      .finally(() => setFeedLoading(false));
+  }, [currentView]);
 
   const researchData = [
     {
@@ -116,23 +100,46 @@ export default function App() {
       {currentView === 'home' && (
         <>
           <main>
-            <HeroFeature {...heroData} />
-            <StoryCollage stories={storyCollageData} />
-            <ResearchStrip items={researchData} />
-            <ReflectionsSection reflections={reflectionsData} />
-            <YourQuestionsSection />
-            
-            {/* Quick link to article demo */}
-            <div className="max-w-[1280px] mx-auto px-4 lg:px-6 py-8 text-center">
-              <button 
-                onClick={() => setCurrentView('article')}
-                className="inline-flex items-center gap-2 px-6 py-3 bg-[#B8336A] text-white hover:bg-[#9a2a58] transition-colors"
-              >
-                View Article Page Demo
-              </button>
-            </div>
+            {feedLoading ? (
+              <div className="max-w-[1280px] mx-auto px-4 py-12 text-center text-muted-foreground">Loading homepage...</div>
+            ) : feedError ? (
+              <div className="max-w-[1280px] mx-auto px-4 py-12 text-center text-red-500">{feedError}</div>
+            ) : feed ? (
+              <>
+                {/* HeroFeature: use first latest_article or fallback */}
+                <HeroFeature
+                  image={feed.latest_articles[0]?.hero_image || heroImage}
+                  category={feed.latest_articles[0]?.category?.name || 'Featured'}
+                  headline={feed.latest_articles[0]?.title || 'Welcome to Pulse & Passion'}
+                  summary={feed.latest_articles[0]?.summary || 'Explore the latest in sexual wellness, relationships, and health.'}
+                  userNeed={feed.latest_articles[0]?.userNeed || 'LEARN'}
+                />
+                {/* StoryCollage: use latest_articles (skip first) */}
+                <StoryCollage
+                  stories={feed.latest_articles.slice(1, 4).map(article => ({
+                    image: article.hero_image || heroImage,
+                    category: article.category?.name || 'Article',
+                    headline: article.title,
+                    summary: article.summary,
+                    userNeed: article.userNeed || 'LEARN',
+                  }))}
+                />
+                {/* TODO: Add more sections for editor_picks, popular_articles, latest_podcasts, latest_videos as needed */}
+                <ResearchStrip items={researchData} />
+                <ReflectionsSection reflections={reflectionsData} />
+                <YourQuestionsSection />
+                {/* Quick link to article demo */}
+                <div className="max-w-[1280px] mx-auto px-4 lg:px-6 py-8 text-center">
+                  <button 
+                    onClick={() => setCurrentView('article')}
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-[#B8336A] text-white hover:bg-[#9a2a58] transition-colors"
+                  >
+                    View Article Page Demo
+                  </button>
+                </div>
+              </>
+            ) : null}
           </main>
-          
           <Footer />
         </>
       )}
