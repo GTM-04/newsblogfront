@@ -108,9 +108,8 @@ export function NewsPage({ onBack }: NewsPageProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {articles.map((article) => (
               <Card 
-                key={article.id} 
-                onClick={() => handleArticleClick(article)}
-                className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+                key={article.id}
+                className="overflow-hidden hover:shadow-lg transition-shadow"
               >
                 {article.hero_image && (
                   <div className="aspect-[16/9] overflow-hidden">
@@ -139,9 +138,16 @@ export function NewsPage({ onBack }: NewsPageProps) {
                   </p>
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
                     <span>{article.view_count} views</span>
-                    <span className="text-[#B8336A] font-semibold hover:underline">
+                    <button
+                      className="text-[#B8336A] font-semibold hover:underline focus:outline-none focus:ring-2 focus:ring-[#B8336A] rounded px-1"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleArticleClick(article);
+                      }}
+                      aria-label={`Read more about ${article.title}`}
+                    >
                       Read More →
-                    </span>
+                    </button>
                   </div>
                 </div>
               </Card>
