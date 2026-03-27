@@ -11,11 +11,15 @@ import { PodcastsPage } from './components/PodcastsPage';
 import { ReflectionsSection } from './components/ReflectionsSection';
 import { ResearchStrip } from './components/ResearchStrip';
 import { StoryCollage } from './components/StoryCollage';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from './components/ui/dialog';
 import { VideoPage } from './components/VideoPage';
 import { YourQuestionsSection } from './components/YourQuestionsSection';
 import heroImage from './Picture1.png';
 
 export default function App() {
+    // Modal state for homepage story details
+    const [selectedStory, setSelectedStory] = useState<any | null>(null);
+    const [isStoryModalOpen, setIsStoryModalOpen] = useState(false);
   const [currentView, setCurrentView] = useState<'home' | 'article' | 'news' | 'podcasts' | 'video' | 'admin'>('home');
 
 
@@ -122,9 +126,44 @@ export default function App() {
                     headline: article.title,
                     summary: article.summary,
                     userNeed: article.userNeed || 'LEARN',
+                    body_content: article.body_content,
+                    author: article.author,
+                    date: article.published_at || article.created_at,
                   }))}
-                  onReadMore={() => setCurrentView('article')}
+                  onReadMore={story => {
+                    setSelectedStory(story);
+                    setIsStoryModalOpen(true);
+                  }}
                 />
+                {/* Story Modal */}
+                <Dialog open={isStoryModalOpen} onOpenChange={setIsStoryModalOpen}>
+                  <DialogContent className="max-w-2xl">
+                    {selectedStory && (
+                      <>
+                        <DialogHeader>
+                          <DialogTitle className="text-2xl mb-2">{selectedStory.headline}</DialogTitle>
+                        </DialogHeader>
+                        <div className="mb-4">
+                          <span className="text-xs font-semibold text-[#B8336A] uppercase tracking-wide mr-2">{selectedStory.category}</span>
+                          <span className="text-xs text-muted-foreground">{selectedStory.date}</span>
+                        </div>
+                        {selectedStory.image && (
+                          <img src={selectedStory.image} alt={selectedStory.headline} className="w-full h-56 object-cover rounded mb-4" />
+                        )}
+                        <div className="prose prose-sm max-w-none text-muted-foreground">
+                          {selectedStory.body_content ? (
+                            <p>{selectedStory.body_content}</p>
+                          ) : (
+                            <p>{selectedStory.summary}</p>
+                          )}
+                        </div>
+                        {selectedStory.author && (
+                          <div className="mt-4 text-xs text-muted-foreground">By {selectedStory.author}</div>
+                        )}
+                      </>
+                    )}
+                  </DialogContent>
+                </Dialog>
                 {/* TODO: Add more sections for editor_picks, popular_articles, latest_podcasts, latest_videos as needed */}
                 <ResearchStrip items={researchData} />
                 <ReflectionsSection reflections={reflectionsData} />
