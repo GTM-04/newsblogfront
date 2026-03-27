@@ -1,6 +1,6 @@
 import { ArrowLeft, Calendar, Clock, Play } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { getPodcasts, type Podcast } from '../../api/podcasts';
+import { getPodcasts, incrementPodcastView, type Podcast } from '../../api/podcasts';
 import { ensureHttps } from '../../utils/imageUtils';
 import { Card } from './ui/card';
 
@@ -12,6 +12,8 @@ interface PodcastsPageProps {
 export function PodcastsPage({ onBack }: PodcastsPageProps) {
   const [podcasts, setPodcasts] = useState<Podcast[]>([]);
   const [loading, setLoading] = useState(true);
+  // Track which podcast views have been incremented
+  const [viewCounted, setViewCounted] = useState<{ [slug: string]: boolean }>({});
   const [currentAudio, setCurrentAudio] = useState<HTMLAudioElement | null>(null);
   const [playingId, setPlayingId] = useState<number | null>(null);
   // Track play count increment per podcast
@@ -74,15 +76,21 @@ export function PodcastsPage({ onBack }: PodcastsPageProps) {
       try {
         const response = await getPodcasts({ page_size: 20, ordering: '-created_at' });
         setPodcasts(response.results);
+        // Increment view count for each podcast (only once per session)
+        response.results.forEach((podcast: any) => {
+          if (podcast.slug && !viewCounted[podcast.slug]) {
+            incrementPodcastView(podcast.slug);
+            setViewCounted(prev => ({ ...prev, [podcast.slug]: true }));
+          }
+        });
       } catch (error) {
         console.error('Failed to fetch podcasts:', error);
       } finally {
         setLoading(false);
       }
     };
-
     fetchPodcasts();
-  }, []);
+  }, [/* Only run once on mount */]);
 
   const mockPodcasts = [
     {
@@ -268,7 +276,6 @@ export function PodcastsPage({ onBack }: PodcastsPageProps) {
                       <Calendar className="size-3" />
                       <span>{(podcast as any).created_at ? new Date((podcast as any).created_at).toLocaleDateString() : (podcast as any).date || ''}</span>
                     </div>
-                    <span>{typeof (podcast as any).play_count === 'number' ? (podcast as any).play_count : 0} plays</span>
                     <span>{(podcast as any).view_count ?? 0} views</span>
                   </div>
                 </div>
