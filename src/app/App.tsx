@@ -123,6 +123,7 @@ export default function App() {
                     summary: article.summary,
                     userNeed: article.userNeed || 'LEARN',
                   }))}
+                  onReadMore={() => setCurrentView('article')}
                 />
                 {/* TODO: Add more sections for editor_picks, popular_articles, latest_podcasts, latest_videos as needed */}
                 <ResearchStrip items={researchData} />
