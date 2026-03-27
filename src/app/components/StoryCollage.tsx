@@ -6,11 +6,13 @@ interface Story {
   userNeed: 'KNOW' | 'LEARN' | 'FEEL' | 'ACT';
 }
 
+
 interface StoryCollageProps {
   stories: Story[];
+  onReadMore?: (story: Story) => void;
 }
 
-export function StoryCollage({ stories }: StoryCollageProps) {
+export function StoryCollage({ stories, onReadMore }: StoryCollageProps) {
   const userNeedColors = {
     KNOW: 'bg-[#B8336A] text-white',
     LEARN: 'bg-[#2E5D8E] text-white',
@@ -52,6 +54,13 @@ export function StoryCollage({ stories }: StoryCollageProps) {
             <p className="text-sm text-muted-foreground line-clamp-2">
               {story.summary}
             </p>
+            <button
+              className="mt-2 text-[#B8336A] font-semibold hover:underline focus:outline-none focus:ring-2 focus:ring-[#B8336A] rounded px-1 text-sm"
+              onClick={() => onReadMore && onReadMore(story)}
+              aria-label={`Read more about ${story.headline}`}
+            >
+              Read More →
+            </button>
           </article>
         ))}
       </div>
