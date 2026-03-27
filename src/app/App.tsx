@@ -158,7 +158,11 @@ export default function App() {
                           )}
                         </div>
                         {selectedStory.author && (
-                          <div className="mt-4 text-xs text-muted-foreground">By {selectedStory.author}</div>
+                          <div className="mt-4 text-xs text-muted-foreground">
+                            By {typeof selectedStory.author === 'object'
+                              ? `${selectedStory.author.first_name || ''} ${selectedStory.author.last_name || ''}`.trim()
+                              : selectedStory.author}
+                          </div>
                         )}
                       </>
                     )}
